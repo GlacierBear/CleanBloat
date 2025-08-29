@@ -64,21 +64,23 @@ Function Remove-App-MSI-I-QN([String]$appName)
     }
 }
 
-
 Function Remove-App([String]$appName){
-    $app = Get-AppxPackage -AllUsers $appName
-    if($app -ne $null){
-        $packageFullName = $app.PackageFullName
+    $app = Get-AppxPackage -AllUsers | Where-Object { $_.Name -eq $appName }
+    if ($app -ne $null) {
         Write-Host "Uninstalling $appName"
-        Remove-AppxPackage -package $packageFullName -AllUsers
-        $provApp = Get-AppxProvisionedPackage -Online 
-        $proPackageFullName = (Get-AppxProvisionedPackage -Online | where {$_.Displayname -eq $appName}).DisplayName
-        if($proPackageFillName -ne $null){
+        foreach ($package in $app) {
+            Remove-AppxPackage -package $package.PackageFullName -AllUsers
+        }
+
+        $provApp = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $appName }
+        if ($provApp -ne $null) {
             Write-Host "Uninstalling provisioned $appName"
-            Remove-AppxProvisionedPackage -online -packagename $proPackageFullName -AllUsers
+            foreach ($package in $provApp) {
+                Remove-AppxProvisionedPackage -online -packagename $package.PackageName
+            }
         }
     }
-    else{
+    else {
         Write-Host "$appName is not installed on this computer"
     }
 }
